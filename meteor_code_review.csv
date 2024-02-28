@@ -1,0 +1,56 @@
+code_meteor_github;count_meteor;code_meteor;code_packages;meteor version;paper mentions
+qingsongma/blend;261;True;OWN;meteor-1.4.jar;16
+cfedermann/Appraise;53;None;;;
+moses-smt/mosesdecoder;26;False;;;
+ImperialNLP/pysimt;16;True;derived from tylin/coco-caption;meteor-1.5.jar;
+IBM/regen;14;True;import nltk;NLTK;
+kpu/MEMT;14;True;Java;meteor 1.0.jar;
+alvations/stasis;13;True;OWN;meteor-1.5.jar;
+facebookresearch/vizseq;10;True;import nltk;NLTK;
+OpenNMT/OpenNMT-py;9;None;;;
+amankhullar/mast;7;True;identical to ImperialNLP/pysimt;meteor-1.5.jar;
+bckim92/language-evaluation;7;True;identical to salaniz/pycocoevalcap;meteor-1.5.jar;
+duyvuleo/Transformer-DyNet;7;False;;;
+forkarinda/MFN;7;True;identical to ImperialNLP/pysimt;meteor-1.5.jar;
+jcjohnson/densecap;7;True;derived from tylin/coco-caption;meteor-1.5.jar;
+freesunshine0316/semantic-nmt;6;False;;;
+shubhamagarwal92/mmd;6;True;import nlgeval;meteor-1.5.jar;
+Maluuba/nlg-eval;5;True;derived from tylin/coco-caption;meteor-1.5.jar;8
+proycon/deepfrog;5;None;;;
+wasiahmad/NeuralCodeSum;5;True;derived from Maluuba/nlg-eval;meteor-1.5.jar;
+Yale-LILY/SummEval;5;True;derived from Maluuba/nlg-eval;meteor-1.5.jar;
+yicheng-w/CommonSenseMultiHopQA;5;True;identical to tylin/coco-caption;meteor-1.5.jar;
+cuhksz-nlp/R2Gen;4;True;derived from tylin/coco-caption;meteor-1.5.jar;
+UFAL-DSG/tgen;4;False;;;
+vyraun/long-tailed;4;None;;;
+stanojevic/beer;3;False;;;28
+tylin/coco-caption;3;True;OWN;meteor-1.5.jar;119
+UKPLab/emnlp2019-dualgraph;3;True;import pycocoevalcap;meteor-1.5.jar;
+v-iashin/MDVC;3;True;import pycocoevalcap;meteor-1.5.jar;
+microsoft/UniVL;2;False;;;
+neulab/compare-mt;2;True;OWN;choose meteor.jar;
+QAQ-v/HetGT;2;None;;;
+seanie12/Info-HCVAE;2;True;identical to tylin/coco-caption;meteor-1.5.jar;
+titech-nlp/numeric-nlg;2;None;;;
+ufal/neuralmonkey;2;False;;;
+YuxiXie/RL-for-Question-Generation;2;True;import pycocoevalcap;meteor-1.5.jar;
+castorini/pygaggle;1;None;;;
+cuhksz-nlp/R2GenCMN;1;True;import pycocoevalcap;meteor-1.5.jar;
+dykang/flownet;1;True;import nlgeval;meteor-1.5.jar;
+dykang/PASTEL;1;None;;;
+EleanorJiang/BlonDe;1;False;;;
+Gitsamshi/WeakVRD-Captioning;1;True;extern tylin/coco-caption;meteor-1.5.jar;
+h4ste/mtft_zsl;1;False;;;
+HLTCHKUST/MulQG;1;True;extern Maluuba/nlg-eval;meteor-1.5.jar;
+hwanheelee1993/UMIC;1;None;;;
+microsoft/GEM;1;None;;;
+nyu-dl/dl4mt-tutorial;1;None;;;
+rashad101/RoMe;1;None;;;
+tkim-snu/GLACNet;1;True;extern windx0303/VIST-Challenge-NAACL-2018;meteor-1.5.jar;
+tuetschek/ratpred;1;False;;;
+whl97/LS-Score;1;False;;;
+facebookresearch/fairseq;;True;import nltk;NLTK;30
+nltk/nltk;;True;OWN;NLTK;43
+salaniz/pycocoevalcap;;True;derived from tylin/coco-caption;meteor-1.5.jar;
+WebNLG/GenerationEval;;True;OWN;meteor-1.5.jar;47
+windx0303/VIST-Challenge-NAACL-2018;;True;OWN;meteor-1.5.jar;
