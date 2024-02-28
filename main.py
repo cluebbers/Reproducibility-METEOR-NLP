@@ -389,6 +389,12 @@ def meteor_install_packages() -> None:
             "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
         ]
     )
+    
+    meteor_install_packages_pypi(
+        path = "data/packages/salaniz_pycocoevalcap",
+        package = "pycocoevalcap",
+        version = "1.2",
+    )
 
 def meteor_install_packages_file(path: str, urls: list[str]) -> None:
 
@@ -715,9 +721,8 @@ def meteor_package_nlg_eval(env, refs, hyps):
     scores = []
     
     # Compute the METEOR score for each pair of reference and hypothesis
-    scores = []
     for i in range(len(refs)):
-        score = meteor_scorer.compute_score([gts[i]], [res[i]])
+        score, _ = meteor_scorer.compute_score({i: gts[i]}, {i: res[i]})  # Adjusted to use dictionaries directly
         scores.append(score)
 
     # Aggregate the scores into a single dictionary
@@ -726,6 +731,40 @@ def meteor_package_nlg_eval(env, refs, hyps):
     }
 
     return aggregated_scores
+
+
+@patch({
+    "meteor":
+    "data/packages/salaniz_pycocoevalcap/pycocoevalcap-1.2/meteor/meteor.py",
+    "tokenizer":
+        "data/packages/salaniz_pycocoevalcap/pycocoevalcap-1.2/tokenizer/ptbtokenizer.py"
+})
+
+def meteor_package_salaniz_pycocoevalcap(env, refs, hyps):
+    meteor_scorer = env['meteor'].Meteor()
+    tokenizer = env["tokenizer"].PTBTokenizer()
+    
+    # Ensure all captions are strings and prepare them for tokenization
+    gts = {i: [{'caption': str(ref)}] for i, ref in enumerate(refs)}
+    res = {i: [{'caption': str(hyp)}] for i, hyp in enumerate(hyps)}
+
+    # Tokenize the ground truths and hypotheses
+    gts_tokenized = tokenizer.tokenize(gts)
+    res_tokenized = tokenizer.tokenize(res)
+
+    # Compute the METEOR score for each tokenized pair of reference and hypothesis
+    scores = []
+    for i in range(len(refs)):
+        score, _ = meteor_scorer.compute_score({i: gts_tokenized[i]}, {i: res_tokenized[i]})
+        scores.append(score)
+
+    # Aggregate the scores into a single dictionary
+    aggregated_scores = {
+        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+    }
+
+    return aggregated_scores
+    
 
 def meteor_package_nltk(refs, hyps):
     from nltk.translate.meteor_score import meteor_score
@@ -964,6 +1003,12 @@ def run_packages_tylin_cococaption_nostem()-> list[dict[str, float]]:
     return meteor_package_nlg_eval(refs, hyps)
 
 @cache()
+
+def run_packages_salaniz_pycocoevalcap()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
+    return meteor_package_salaniz_pycocoevalcap(refs, hyps)
+
+@cache()
 # FIXME
 # def run_packages_nltk() -> dict[str, float]:
 #     refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
@@ -1041,8 +1086,7 @@ def generate_overview_figure() -> None:
     """
 
     labels = load_dataset()
-    rouge = labels.loc[labels["paper_rouge"]]
-    acl_rouge = rouge.loc[rouge["paper_venue"] == "acl"]
+    meteor = labels.loc[labels["paper_meteor_prelim"] == True]
 
     print("\n".join(_.strip() for _ in f"""
 
@@ -1050,39 +1094,38 @@ def generate_overview_figure() -> None:
     (A) REPRODUCIBILITY
     ===================
 
-    {len(rouge)} model evaluations using ROUGE
-    {rouge["reproducible"].mean() * 100:.0f}% reproducible
+    {len(meteor)} model evaluations using METEOR
+    {meteor["reproducible"].mean() * 100:.0f}% reproducible
 
     (NOTE: see paper for details on comparison studies)
-
+    
     =================
     (B) COMPARABILITY
     =================
 
-    Release code -- including incomplete and nonfunctional
-    {(acl_rouge["code_url"] != "").mean() * 100:.0f}% papers
-
-    Release code with ROUGE evaluation
-    {acl_rouge["code_rouge"].mean() * 100:.0f}% papers
-
-    Perform ROUGE significance testing / bootstrapping
-    {rouge["paper_protocol"].map(lambda _: "bootstrapping" in _).mean() * 100:.0f}% papers
-
-    List ROUGE configuration parameters
-    {(rouge["paper_params"].map(len) != 0).mean() * 100:.0f}% papers
-
-    Cite ROUGE software package -- including unofficial
-    {(rouge["packages"].map(len) != 0).mean() * 100:.0f}% papers
-
-    ===============
-    (C) CORRECTNESS
-    ===============
-
-    Percentage of ROUGE software citations
-    that reference software with scoring errors
-    {rouge["software_error"].sum() / (rouge["packages"].map(len) != 0).sum() * 100:.0f}% papers
-
+    # Release code -- including incomplete and nonfunctional
+    {(meteor["code_meteor_url"].apply(lambda x: bool(x))).mean() * 100:.0f}% papers
+    
+    Release code with METEOR evaluation
+    {meteor["code_meteor"].mean() * 100:.0f}% papers
+    
+    List METEOR configuration parameters
+    {(meteor["paper_meteor_params"].apply(lambda x: len(x) > 0 if isinstance(x, list) else False).mean() * 100):.0f}% papers
+    
+    Cite METEOR software package -- including unofficial
+    {(meteor["paper_meteor_packages"].map(len) != 0).mean() * 100:.0f}% papers
+    
     """.split("\n")))
+    
+    # ===============
+    # (C) CORRECTNESS
+    # ===============
+
+    # Percentage of ROUGE software citations
+    # that reference software with scoring errors
+    # {rouge["software_error"].sum() / (rouge["packages"].map(len) != 0).sum() * 100:.0f}% papers
+
+    
 
 def generate_historical_plot():
 
@@ -1097,10 +1140,10 @@ def generate_historical_plot():
 
     data = load_dataset()
 
-    data = data.loc[data["paper_rouge"]]
+    data = data.loc[data["paper_meteor_prelim"]==True]
 
-    data["uses_rouge"] = data["paper_rouge"]
-    data["cites_package"] = data["packages"].map(len) != 0
+    data["uses_meteor"] = data["paper_meteor_prelim"]
+    data["cites_package"] = data["paper_meteor_packages"].map(len) != 0
     data["has_error"] = data["software_error"]
     data["is_reproducible"] = data["reproducible"]
 
@@ -1109,7 +1152,7 @@ def generate_historical_plot():
         .loc[data["paper_year"] >= 2004]
         .groupby("paper_year")
         [[
-            "uses_rouge",
+            "uses_meteor",
             "cites_package",
             "has_error",
             "is_reproducible"
@@ -1125,13 +1168,13 @@ def generate_historical_plot():
     years = list(result.index)
     plt.xticks(years, rotation=90)
 
-    plt.bar(years, result["uses_rouge"], color = "lightgray", width=0.97)
+    plt.bar(years, result["uses_meteor"], color = "lightgray", width=0.97)
     plt.bar(years, result["cites_package"], color = (0.60, 0, 0.05), width=0.97)
     plt.bar(years, result["cites_package"] - result["has_error"], color = (0.0, 0.6, 0.3), width=0.97)
 
     total_correct_package = (result["cites_package"] - result["has_error"]).sum()
     total_incorrect_package = (result["has_error"]) .sum()
-    total_no_package = (result["uses_rouge"] - result["cites_package"]).sum()
+    total_no_package = (result["uses_meteor"] - result["cites_package"]).sum()
 
     plt.text(2004, 610, f"⬤ No Package Citation (n = {total_no_package:,d})", size = 10, weight = "demibold", color = "gray")
     plt.text(2004, 580, f"⬤ Cites Incorrect Package (n = {total_incorrect_package:,d})", size = 10, weight = "demibold", color = (0.60, 0, 0.05))
@@ -1140,7 +1183,7 @@ def generate_historical_plot():
     plt.xlim(2003.5, 2022.5)
 
     plt.grid(axis = "y", color = "white", linewidth = 1.2)
-    plt.ylabel("Papers Performing ROUGE Evaluation", weight = "demibold")
+    plt.ylabel("Papers Performing METEOR Evaluation", weight = "demibold")
 
     plt.tight_layout()
     plt.savefig("correctness.pdf", bbox_inches = "tight", transparent=True)
@@ -1154,11 +1197,11 @@ def generate_historical_plot():
     years = list(result.index)
     plt.xticks(years, rotation=90, color = "white")
 
-    plt.bar(years, result["uses_rouge"], color = "lightgray", width=0.97)
+    plt.bar(years, result["uses_meteor"], color = "lightgray", width=0.97)
     plt.bar(years, result["is_reproducible"], color = (0.05, 0.3, 0.5), width=0.97)
 
     total_reproducible = result["is_reproducible"].sum()
-    total_not_reproducible = (result["uses_rouge"] - result["is_reproducible"]).sum()
+    total_not_reproducible = (result["uses_meteor"] - result["is_reproducible"]).sum()
 
     plt.text(2004, 585, f"⬤ Meets Basic Reproducibility Criteria (n = {total_reproducible:,d})", size = 10, weight = "demibold", color = (0.05, 0.3, 0.5))
     plt.text(2004, 615, f"⬤ Fails Basic Reproducibility Criteria (n = {total_not_reproducible:,d})", size = 10, weight = "demibold", color = "gray")
@@ -1168,7 +1211,7 @@ def generate_historical_plot():
     plt.gca().invert_yaxis()
 
     plt.grid(axis = "y", color = "white", linewidth = 1.2)
-    plt.ylabel("Papers Performing ROUGE Evaluation", weight = "demibold")
+    plt.ylabel("Papers Performing METEOR Evaluation", weight = "demibold")
 
     plt.tight_layout()
     plt.savefig("reproducibility.pdf", bbox_inches = "tight", transparent=True)
@@ -1215,9 +1258,6 @@ def generate_process_figure() -> None:
     Overall Citations Collected
     ===========================
 
-    ACL Citations: {len(papers.loc[papers["paper_venue"] == "acl"])}
-    DBLP Citations: {len(papers.loc[papers["paper_venue"] != "acl"])}
-    ----------
     Total Citations: {len(papers)}
 
     Download and Extract Text
@@ -1252,7 +1292,6 @@ def generate_process_figure() -> None:
     =======================
 
     Automated Rules: {len(full) - len(prelim)}
-    Manual Review: {len(prelim) - len(rouge)}
     ----------
     Papers Excluded: {len(full) - len(rouge)}
 
@@ -1440,7 +1479,7 @@ def load_dataset() -> pd.DataFrame:
     """
 
     try: return pd.read_json(
-        "data/papers.jsonl.gz",
+        "data/meteor_papers.jsonl.gz",
         orient = "records", lines = True)
     except: pass
 
