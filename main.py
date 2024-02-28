@@ -383,6 +383,7 @@ def meteor_install_packages() -> None:
             "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/meteor.py"
         ]
     )
+    
     meteor_install_packages_file(
         path = "data/packages/nlg_eval/data",
         urls = [
@@ -395,33 +396,51 @@ def meteor_install_packages() -> None:
         package = "pycocoevalcap",
         version = "1.2",
     )
+    
+    meteor_install_packages_pypi(
+        path = "data/packages/yale_summeval",
+        package = "summ_eval",
+        version = "0.892",
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/yale_summeval/summ_eval-0.892/summ_eval",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/meteor-1.5.jar",
+        ]
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/yale_summeval/summ_eval-0.892/summ_eval/data",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
+        ]
+    )
 
 def meteor_install_packages_file(path: str, urls: list[str]) -> None:
-
     """
-
     Download a list of files from URLs.
-
     """
-
     from pathlib import Path
     import requests
     from tqdm import tqdm
 
     path = Path(path)
-
-    if path.exists():
-
-        tqdm.write(f"[EXISTS] {path}")
-        return
-
-    tqdm.write(f"[INSTALLING] {path}")
-
-    path.mkdir(parents = True, exist_ok = True)
+    path.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
     
     for url in urls:
-        file = path / (url.split("/")[-1])
-        file.write_bytes(requests.get(url).content)
+        file_name = url.split("/")[-1]
+        file_path = path / file_name
+
+        if file_path.exists():
+            tqdm.write(f"[EXISTS] {file_path}")
+            continue  # Skip to the next file if this one already exists
+
+        tqdm.write(f"[DOWNLOADING] {file_path}")
+        # Download and save the file
+        response = requests.get(url)
+        file_path.write_bytes(response.content)
+
 
 def meteor_install_packages_tar(path: str, url: str) -> None:
 
@@ -732,6 +751,32 @@ def meteor_package_nlg_eval(env, refs, hyps):
 
     return aggregated_scores
 
+@patch({
+    "summ_eval.metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/metric.py",
+    "meteor_metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/meteor_metric.py",
+})
+
+def meteor_package_yale_summeval(env, refs, hyps):
+    # Access the MeteorMetric class through the env dictionary
+    MeteorMetric = env["meteor_metric"].MeteorMetric
+    
+    # Initialize the MeteorMetric
+    meteor_scorer = MeteorMetric()
+    
+    scores = []
+    
+    for hyp, ref in zip(hyps, refs):
+        # Evaluate each hypothesis against its reference
+        score_dict = meteor_scorer.evaluate_example(hyp, [ref])  # Assuming evaluate_example expects a list of references
+        scores.append(score_dict['meteor'])
+    
+    # Aggregate the scores into a single dictionary
+    aggregated_scores = {
+        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+    }
+    
+    return aggregated_scores
+
 
 @patch({
     "meteor":
@@ -764,7 +809,6 @@ def meteor_package_salaniz_pycocoevalcap(env, refs, hyps):
     }
 
     return aggregated_scores
-    
 
 def meteor_package_nltk(refs, hyps):
     from nltk.translate.meteor_score import meteor_score
@@ -998,17 +1042,23 @@ def run_configs_misreport_recall() -> list[dict[str, float]]:
 
 @cache()
 
-def run_packages_tylin_cococaption_nostem()-> list[dict[str, float]]:
-    refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
+def run_packages_yale_summeval()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_yale_summeval(refs, hyps)
+
+@cache()
+
+def run_packages_nlg_eval()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
     return meteor_package_nlg_eval(refs, hyps)
 
 @cache()
 
 def run_packages_salaniz_pycocoevalcap()-> list[dict[str, float]]:
-    refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
+    refs, hyps = meteor_data_dev()  
     return meteor_package_salaniz_pycocoevalcap(refs, hyps)
 
-@cache()
+#@cache()
 # FIXME
 # def run_packages_nltk() -> dict[str, float]:
 #     refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
