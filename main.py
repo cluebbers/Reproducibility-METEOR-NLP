@@ -3,6 +3,8 @@ import typing as T
 import pandas as pd
 import nltk
 import logging; logging.disable(logging.CRITICAL)
+import sys
+from pathlib import Path
 
 # NLTK need wordnet for METEOR scoring
 nltk.download('wordnet')
@@ -416,6 +418,171 @@ def meteor_install_packages() -> None:
             "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
         ]
     )
+    
+    # bckim92_languageevaluation
+    meteor_install_packages_github(
+        path = "data/packages/bckim92_languageevaluation",
+        user = "bckim92",
+        repo = "language-evaluation",
+        ref = "8e9e03feb7f5e605f20fc0c8dba0e24532a26216",
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/bckim92_languageevaluation/bckim92-language-evaluation-8e9e03f/language_evaluation/coco_caption_py3/pycocoevalcap/meteor/data",
+        urls = [
+            "https://raw.githubusercontent.com/cmu-mtlab/meteor/master/data/paraphrase-en.gz",
+        ]
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/bckim92_languageevaluation/bckim92-language-evaluation-8e9e03f/language_evaluation/__init__.py",
+        ],
+        patches = {
+            r"import colorlog": r"",  # Comment out the import
+            r'import more_itertools': r'',
+            r'from language_evaluation.coco_caption_py3.pycocoevalcap.eval import COCOEvalCap' : r'from .coco_caption_py3.pycocoevalcap.eval import COCOEvalCap',
+            r'from language_evaluation.coco_caption_py3.pycocotools.coco import COCO' : r'from .coco_caption_py3.pycocotools.coco import COCO',
+            r'from language_evaluation.rouge import rouge_scorer, scoring' : r'',
+            r'from language_evaluation.pyrouge.Rouge155 import Rouge155' : r'',
+            r'from skimage.draw import polygon' : r'',
+        }
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/bckim92_languageevaluation/bckim92-language-evaluation-8e9e03f/language_evaluation/coco_caption_py3/pycocotools/coco.py",
+        ],
+        patches = {
+            r'from skimage.draw import polygon' : r'',
+        }
+    )
+    
+    # comparemt
+    meteor_install_packages_pypi(
+        path = "data/packages/neulab_comparemt",
+        package = "compare_mt",
+        version = "0.2.10"
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/scorers.py",
+        ],
+        patches = {
+            r'import sacrebleu' : r'',
+            r'from compare_mt import align_utils' : r'#',
+            r'from compare_mt import ngram_utils' : r'#',
+            r'from compare_mt.rouge import rouge_scorer' : r'#',
+            r'from compare_mt import corpus_utils' : r'import corpus_utils',
+        }
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/meteor-1.5.jar",
+        ]
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/data",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
+        ]
+    )
+    
+    #generationeval
+    meteor_install_packages_github(
+        path = "data/packages/generationeval",
+        user = "WebNLG",
+        repo = "GenerationEval",
+        ref = "80678494f9ae49e8984d78d5efdec482bd37fc1d",
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/generationeval/WebNLG-GenerationEval-8067849/metrics/meteor-1.5/",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/meteor-1.5.jar",
+        ]
+    )
+    
+    meteor_install_packages_file(
+        path = "data/packages/generationeval/WebNLG-GenerationEval-8067849/metrics/meteor-1.5/data",
+        urls = [
+            "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
+        ]
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/generationeval/WebNLG-GenerationEval-8067849//eval.py",
+        ],
+        patches = {
+            r'from ' : r'#',
+        }
+    )
+    
+    #fairseq
+    meteor_install_packages_pypi(
+        path = "data/packages/fairseq",
+        package = "fairseq",
+        version = "0.12.2"
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/fairseq/fairseq-0.12.2/fairseq/scoring/meteor.py",
+        ],
+        patches = {
+            r'from fairseq.dataclass' : r'#',
+            r'from fairseq.scoring' : r'#',
+        }
+    )
+    
+    #vizseq
+    meteor_install_packages_pypi(
+        path = "data/packages/vizseq",
+        package = "vizseq",
+        version = "0.1.15"
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/bleu.py",
+        ],
+        patches = {
+            r'from sacrebleu' : r'#',
+        }
+    )
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/chrf.py",
+        ],
+        patches = {
+            r'from sacrebleu' : r'#',
+        }
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/rouge.py",
+        ],
+        patches = {
+            r'import rouge' : r'#',
+        }
+    )
+    
+    meteor_install_packages_patch(
+        paths = [
+            "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/meteor.py",
+        ],
+        patches = {
+            r'@register_scorer' : r'#',
+        }
+    )
+
+
 
 def meteor_install_packages_file(path: str, urls: list[str]) -> None:
     """
@@ -582,201 +749,93 @@ def meteor_install_packages_patch(
         if original != text:
             print(f"PATCHED: {path}")
 
-def rouge_reference_base(
+@patch({
+    "meteor":
+    "data/packages/bckim92_languageevaluation/bckim92-language-evaluation-8e9e03f/language_evaluation/__init__.py",
+})
 
-        refs: list[str],
-        hyps: list[str],
-        args: str = "-n 2",
+def meteor_package_bckim92_languageevaluation(env, refs, hyps):
+    language_evaluation_dir = Path("data/packages/bckim92_languageevaluation/bckim92-language-evaluation-8e9e03f/")
+    sys.path.append(str(language_evaluation_dir))
+    
+    evaluator = env["meteor"].CocoEvaluator(
+    coco_types=["METEOR"],  # Specify only METEOR to be evaluated
+    tokenization_fn=None,   
+    verbose=True,
+    unk_token='_UNK'
+)
+    results = evaluator.run_evaluation(refs, hyps)
+    results = results['METEOR']
 
-        ) -> str:
+    # Aggregate the scores into a single dictionary
+    aggregated_scores = {
+        "meteor_mean_score": results
+    }
 
-    """
+    return aggregated_scores
 
-    Run the reference Perl ROUGE script, returning its exact outputs string.
+@patch({
+    "dataclass":
+        "data/packages/fairseq/fairseq-0.12.2/fairseq/dataclass/__init__.py",
+        
+    "meteor":
+        "data/packages/fairseq/fairseq-0.12.2/fairseq/scoring/meteor.py"
+})
 
-    Other functions (rouge_reference_individual and rouge_reference_overall) use
-    regular expressions to search this output string and return scores. This
-    function should be be run directly.
+def meteor_package_fairseq(env, refs, hyps):
+    fairseq = env["fairseq"]
+    meteor_scorer = env["meteor"].MeteorScorer()
+    scores = []
 
-    """
+    # Aggregate scores to calculate mean METEOR score
+    mean_score = meteor_scorer.score()
+    return {'meteor_mean_score': mean_score}
 
-    import tempfile
-    import subprocess
-    from pathlib import Path
-
-    rouge_path = meteor_install_path()
-
-    temp = tempfile.TemporaryDirectory()
-
-    ref_dir = Path(temp.name) / "ref"
-    hyp_dir = Path(temp.name) / "hyp"
-
-    ref_dir.mkdir(parents = True, exist_ok = True)
-    hyp_dir.mkdir(parents = True, exist_ok = True)
-
-    conf_file = Path(temp.name) / "config.xml"
-
-    conf_entries = []
-
-    for i, (ref, hyp) in enumerate(zip(refs, hyps)):
-
-        ref_path = ref_dir / f"{i}.spl"
-        hyp_path = hyp_dir / f"{i}.spl"
-
-        ref_path.write_text(ref)
-        hyp_path.write_text(hyp)
-
-        conf_entries.append(f"""
-            <EVAL ID="{i}">
-                <PEER-ROOT>{hyp_dir}</PEER-ROOT>
-                <MODEL-ROOT>{ref_dir}</MODEL-ROOT>
-                <INPUT-FORMAT TYPE="SPL"></INPUT-FORMAT>
-                <PEERS>
-                    <P ID="1">{i}.spl</P>
-                </PEERS>
-                <MODELS>
-                    <M ID="1">{i}.spl</M>
-                </MODELS>
-            </EVAL>
-        """)
-
-    conf_file.write_text(f"""
-        <ROUGE-EVAL version="1.55">
-        {"".join(conf_entries)}
-        </ROUGE-EVAL>
-    """)
-
-    output = subprocess.check_output([
-        f"{rouge_path}/ROUGE-1.5.5.pl",
-        "-e", f"{rouge_path}/data",
-        *args.split(),
-        "-a", str(conf_file)
-    ]).decode()
-
-    temp.cleanup()
-    return output
-
-def rouge_reference_individual(
-
-        refs: list[str],
-        hyps: list[str],
-        args: str = "-n 2",
-
-        ) -> list[dict[str, float]]:
-
-    """
-
-    Run official ROUGE, returning scores for each individual model output.
-    This will NOT generate an overall ROUGE score, ONLY individual scores.
-
-    """
-
-    import re
-
-    if "-d" not in args:
-        args += " -d"
-
-    output = rouge_reference_base(refs, hyps, args)
-
-    eval_pat = r"(ROUGE-.*) Eval (.*)\.\d+ R:(.*) P:(.*) F:(.*)"
-    evals: list[dict] = [{} for _ in range(len(refs))]
-
-    for rtype, i, r, p, f in re.findall(eval_pat, output):
-
-        rtype = rtype.lower()
-        i = int(i)
-
-        evals[i][f"{rtype}-r"] = float(r)
-        evals[i][f"{rtype}-p"] = float(p)
-        evals[i][f"{rtype}-f"] = float(f)
-
-    return evals
-
-def rouge_reference_overall(
-
-        refs: list[str],
-        hyps: list[str],
-        args: str = "-n 2",
-
-        ) -> dict[str, float]:
-
-    """
-
-    Run official ROUGE, returning overall ROUGE scores for the entire dataset.
-    This will NOT generate individual scores for each model output.
-
-    """
-
-    import re
-
-    output = rouge_reference_base(refs, hyps, args)
-
-    pat = r"(ROUGE-.*?) Average_(.): (.*?) \(95\%-conf\.int\. (.*?) - (.*?)\)"
-    scores = {}
-
-    for rtype, measure, score, cb, ce in re.findall(pat, output):
-
-        rtype = rtype.lower()
-        measure = measure.lower()
-
-        scores[f"{rtype}-{measure}"] = float(score)
-        scores[f"{rtype}-{measure}_cb"] = float(cb)
-        scores[f"{rtype}-{measure}_ce"] = float(ce)
-
-    return scores
 
 @patch({
     "meteor":
-    "data/packages/nlg_eval/meteor.py",
+    "data/packages/generationeval/WebNLG-GenerationEval-8067849/eval.py",
 })
 
-def meteor_package_nlg_eval(env, refs, hyps):
-    # Prepare the data for scoring by converting lists to dictionaries
-    gts = {i: [ref] for i, ref in enumerate(refs)}
-    res = {i: [hyp] for i, hyp in enumerate(hyps)}
+def meteor_package_generationeval(env, refs, hyps):
+    import tempfile
+    import os
 
-    # The Meteor class is accessed from the env dictionary provided by the @patch decorator
-    meteor_scorer = env['meteor'].Meteor()
-    scores = []
-    
-    # Compute the METEOR score for each pair of reference and hypothesis
-    for i in range(len(refs)):
-        score, _ = meteor_scorer.compute_score({i: gts[i]}, {i: res[i]})  # Adjusted to use dictionaries directly
-        scores.append(score)
+    eval_module = env['meteor']  # Correctly access the eval module
 
-    # Aggregate the scores into a single dictionary
-    aggregated_scores = {
-        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
-    }
+    # Ensure refs and hyps lists are directly passed to the eval script without filtering
+    with tempfile.NamedTemporaryFile('w+', delete=False) as refs_file, \
+         tempfile.NamedTemporaryFile('w+', delete=False) as hyps_file:
+        
+        # Write the refs to the temporary file
+        for ref in refs:
+            refs_file.write(f"{ref}\n")
+        refs_file_path = refs_file.name
 
+        # Write the hyps to the temporary file
+        for hyp in hyps:
+            hyps_file.write(f"{hyp}\n")
+        hyps_file_path = hyps_file.name
+
+    # Execute the eval script using the provided run function within the eval module
+    result = eval_module.run(
+        refs_path=refs_file_path,
+        hyps_path=hyps_file_path,
+        num_refs=1,  # Assuming a single reference per hypothesis
+        lng="en",
+        metrics="meteor"
+    )
+
+    # Clean up the temporary files after use
+    os.unlink(refs_file_path)
+    os.unlink(hyps_file_path)
+
+    # Extract and return the METEOR score from the result
+    # Assuming result is a dict with 'meteor' key, adjust based on actual result structure
+    meteor_score = result.get('meteor', 7)  # Default to 0 if not found or in case of errors
+
+    aggregated_scores = {"meteor_mean_score": meteor_score}
     return aggregated_scores
-
-@patch({
-    "summ_eval.metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/metric.py",
-    "meteor_metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/meteor_metric.py",
-})
-
-def meteor_package_yale_summeval(env, refs, hyps):
-    # Access the MeteorMetric class through the env dictionary
-    MeteorMetric = env["meteor_metric"].MeteorMetric
-    
-    # Initialize the MeteorMetric
-    meteor_scorer = MeteorMetric()
-    
-    scores = []
-    
-    for hyp, ref in zip(hyps, refs):
-        # Evaluate each hypothesis against its reference
-        score_dict = meteor_scorer.evaluate_example(hyp, [ref])  # Assuming evaluate_example expects a list of references
-        scores.append(score_dict['meteor'])
-    
-    # Aggregate the scores into a single dictionary
-    aggregated_scores = {
-        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
-    }
-    
-    return aggregated_scores
-
 
 @patch({
     "meteor":
@@ -810,241 +869,160 @@ def meteor_package_salaniz_pycocoevalcap(env, refs, hyps):
 
     return aggregated_scores
 
+@patch({
+    "corpus_utils":
+        "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/corpus_utils.py",
+    "meteor":
+    "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/scorers.py",  
+})
+def meteor_package_neulab_comparemt(env, refs, all_hyps):
+    # Initialize the METEORScorer with the path to the METEOR jar file
+    meteor_scorer = env['meteor'].METEORScorer(meteor_directory="data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/")
+    scores = []
+    
+    # Ensure that each reference is paired with its corresponding set of hypotheses
+    for ref, hyps in zip(refs, all_hyps):  # Iterate over pairs of reference and multiple hypotheses
+        hyp_scores = []  # Store scores for each hypothesis against the single reference
+        for hyp in hyps:
+            # Score each hypothesis against the reference
+            score, _ = meteor_scorer.score_sentence(ref, hyp)  # Using score_sentence for individual pairs
+            hyp_scores.append(score)
+        # Optionally, you can aggregate scores per reference here, e.g., take the mean of hyp_scores if needed
+        scores.extend(hyp_scores)  # Extend the main score list with scores from this round of hypotheses
+
+    # Calculate the mean METEOR score across all evaluated pairs
+    aggregated_scores = {
+        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+    }
+
+    return aggregated_scores
+
+
+@patch({
+    "meteor":
+    "data/packages/nlg_eval/meteor.py",
+})
+
+def meteor_package_nlg_eval(env, refs, hyps):
+    # Prepare the data for scoring by converting lists to dictionaries
+    gts = {i: [ref] for i, ref in enumerate(refs)}
+    res = {i: [hyp] for i, hyp in enumerate(hyps)}
+
+    # The Meteor class is accessed from the env dictionary provided by the @patch decorator
+    meteor_scorer = env['meteor'].Meteor()
+    scores = []
+    
+    # Compute the METEOR score for each pair of reference and hypothesis
+    for i in range(len(refs)):
+        score, _ = meteor_scorer.compute_score({i: gts[i]}, {i: res[i]})  # Adjusted to use dictionaries directly
+        scores.append(score)
+
+    # Aggregate the scores into a single dictionary
+    aggregated_scores = {
+        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+    }
+
+    return aggregated_scores
+
 def meteor_package_nltk(refs, hyps):
+    import nltk
     from nltk.translate.meteor_score import meteor_score
     scores = []
 
-    # Ensure that both refs and hyps are lists of tokenized texts
-    tokenized_refs = [[nltk.word_tokenize(ref) for ref in refs_i] for refs_i in refs]
+    # Tokenize references and hypotheses
+    tokenized_refs = [[nltk.word_tokenize(ref)] for ref in refs]  # Wrapping each ref in another list
     tokenized_hyps = [nltk.word_tokenize(hyp) for hyp in hyps]
 
-    for ref, hyp in zip(tokenized_refs, tokenized_hyps):
-        # Calculate METEOR score for each hypothesis against its references
-        score = meteor_score(ref, hyp)
-        scores.append({'meteor': score})
+    for tokenized_ref, tokenized_hyp in zip(tokenized_refs, tokenized_hyps):
+        # Calculate METEOR score for each hypothesis against its reference(s)
+        # NLTK's meteor_score function expects the first argument to be a list of lists of reference tokens
+        # and the second argument to be a list of hypothesis tokens.
+        score = meteor_score(tokenized_ref, tokenized_hyp)
+        scores.append(score)
     
-    # Aggregate scores if needed or return individual scores
-    mean_score = sum(score['meteor'] for score in scores) / len(scores)
+    # Aggregate scores to calculate mean METEOR score
+    mean_score = sum(scores) / len(scores) if scores else 0
     return {'meteor_mean_score': mean_score}
+
+@patch({
+    # "vizseq":
+    #      "data/packages/vizseq/vizseq-0.1.15/vizseq/__init__.py",
+    "vizseq._utils.optional" :
+        "data/packages/vizseq/vizseq-0.1.15/vizseq/_utils/optional.py",
+    "vizseq.scorers":
+        "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/__init__.py",
+    "meteor":
+        "data/packages/vizseq/vizseq-0.1.15/vizseq/scorers/meteor.py"
+})
+def meteor_package_vizseq(env, refs, hyps):
+    meteor_scorer = env["meteor"].METEORScorer()
+    scores = []
+
+    # Prepare data: VizSeq expects references as a list of lists, and hypotheses as a list of strings
+    tokenized_refs = [[ref.split()] for ref in refs]  # Tokenizing and wrapping each ref in another list
+    tokenized_hyps = [hyp.split() for hyp in hyps]  # Tokenizing hypotheses
+
+    # Call the score method of the METEORScorer
+    scores = meteor_scorer.score(tokenized_hyps, tokenized_refs)
+
+    # Extract the relevant scores from the VizSeqScore object
+    mean_score = scores.corpus_score
+
+    # Return the mean METEOR score in the specified format
+    return {'meteor_mean_score': mean_score}
+
+@patch({
+    "summ_eval.metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/metric.py",
+    "meteor_metric": "data/packages/yale_summeval/summ_eval-0.892/summ_eval/meteor_metric.py",
+})
+
+def meteor_package_yale_summeval(env, refs, hyps):
+    # Access the MeteorMetric class through the env dictionary
+    MeteorMetric = env["meteor_metric"].MeteorMetric
     
+    # Initialize the MeteorMetric
+    meteor_scorer = MeteorMetric()
+    
+    scores = []
+    
+    for hyp, ref in zip(hyps, refs):
+        # Evaluate each hypothesis against its reference
+        score_dict = meteor_scorer.evaluate_example(hyp, [ref]) 
+        scores.append(score_dict['meteor'])
+    
+    # Aggregate the scores into a single dictionary
+    aggregated_scores = {
+        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+    }
+    
+    return aggregated_scores
 
 @cache()
 
-def run_configs_baseline() -> dict[str, float]:
 
-    """
 
-    Run baseline configuration.
+# @cache()
 
-    """
+# def run_packages_fairseq()-> list[dict[str, float]]:
+#     refs, hyps = meteor_data_dev()  
+#     return meteor_package_fairseq(refs, hyps)
 
-    return rouge_reference_individual(*meteor_data_dev(), args = "-n 2")
+# @cache()
 
-@cache()
+# def run_packages_neulab_comparemt()-> list[dict[str, float]]:
+#     refs, hyps = meteor_data_dev()  
+#     return meteor_package_neulab_comparemt(refs, hyps)
+# @cache()
 
-def run_configs_apply_stemming() -> dict[str, float]:
-
-    """
-
-    Run baseline configuration plus stemming.
-
-    """
-
-    return rouge_reference_individual(*meteor_data_dev(), args = "-n 2 -m")
+# def run_packages_generationeval()-> list[dict[str, float]]:
+#     refs, hyps = meteor_data_dev()  
+#     return meteor_package_generationeval(refs, hyps)
 
 @cache()
 
-def run_configs_remove_stopwords() -> dict[str, float]:
-
-    """
-
-    Run baseline configuration plus stopword removal.
-
-    """
-
-    return rouge_reference_individual(*meteor_data_dev(), args = "-n 2 -s")
-
-@cache()
-
-def run_configs_no_sentence_splits() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration, but remove all sentence splits.
-
-    CNN / Daily Mail (and reference ROUGE) represents sentence splits using
-    newlines. So, we simply remove all newlines. This causes ROUGE-L to treat
-    huge multi-sentence model outputs as a single sentence.
-
-    """
-
-    refs, hyps = meteor_data_dev()
-
-    refs = [" ".join(_.split()).strip() for _ in refs]
-    hyps = [" ".join(_.split()).strip() for _ in hyps]
-
-    return rouge_reference_individual(refs, hyps, args = "-n 2")
-
-@cache()
-
-def run_configs_period_sentence_splits() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration, but delete all sentence splits and resplit
-    sentences using periods. This is similar to how some ROUGE packages operate,
-    like pltrdy_files2rouge.
-
-    """
-
-    refs, hyps = meteor_data_dev()
-
-    refs = [" ".join(_.split()).strip() for _ in refs]
-    hyps = [" ".join(_.split()).strip() for _ in hyps]
-
-    space = True
-
-    if space:
-        period = " ."
-    else:
-        period = "."
-
-    refs = [_.replace(period, ".\n").replace("\n ", "\n").strip() for _ in refs]
-    hyps = [_.replace(period, ".\n").replace("\n ", "\n").strip() for _ in hyps]
-
-    return rouge_reference_individual(refs, hyps, args = "-n 2")
-
-@cache()
-
-def run_configs_nltk_sentence_splits() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration, but delete all sentence splits and resplit
-    sentences using NLTK. This is similar to how some ROUGE packages operate,
-    like bheinzerling_pyrouge (and several other pyrouges).
-
-    """
-
-    import nltk
-
-    refs, hyps = meteor_data_dev()
-
-    refs = [" ".join(_.split()).strip() for _ in refs]
-    hyps = [" ".join(_.split()).strip() for _ in hyps]
-
-    refs = ["\n".join(nltk.sent_tokenize(_)) for _ in refs]
-    hyps = ["\n".join(nltk.sent_tokenize(_)) for _ in hyps]
-
-    return rouge_reference_individual(refs, hyps, args = "-n 2")
-
-@cache()
-
-def run_configs_nltk_tokenize() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration, but pretokenize using NLTK.
-
-    """
-
-    import nltk
-
-    refs, hyps = meteor_data_dev()
-
-    refs = [
-        "\n".join(
-            " ".join(nltk.word_tokenize(line, preserve_line = True))
-            for line in text.split("\n")
-        )
-        for text in refs
-    ]
-
-    hyps = [
-        "\n".join(
-            " ".join(nltk.word_tokenize(line, preserve_line = True))
-            for line in text.split("\n")
-        )
-        for text in hyps
-    ]
-
-    return rouge_reference_individual(refs, hyps, args = "-n 2")
-
-@cache()
-
-def run_configs_truncate_75_bytes() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration with 75 byte truncation.
-
-    """
-
-    return rouge_reference_individual(*meteor_data_dev(), args = "-n 2 -b 75")
-
-@cache()
-
-def run_configs_truncate_100_words() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration with 100 word truncation.
-
-    """
-
-    return rouge_reference_individual(*meteor_data_dev(), args = "-n 2 -l 100")
-
-@cache()
-
-def run_configs_fscore_beta12() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration, but compute F_{1.2} scores instead of a more
-    traditional balanced F_{1} score. This is inspired by tylin_cococaption,
-    which has for many years accidentally computed incorrect F-scores.
-
-    Note that Perl ROUGE actually represents F-scores using "alpha" rather than
-    "beta." See paper for this discussion. Conversion equations included below.
-
-    """
-
-    beta = 1.2
-    alpha = 1 / (1 + beta**2)
-
-    return rouge_reference_individual(*meteor_data_dev(), args = f"-n 2 -p {alpha}")
-
-@cache()
-
-def run_configs_misreport_recall() -> list[dict[str, float]]:
-
-    """
-
-    Run baseline configuration. But, instead of reporting F-score, report
-    full-length recall instead!
-
-    """
-
-    results = rouge_reference_individual(*meteor_data_dev(), args = "-n 2")
-
-    for r in results:
-        for k in ["1", "2", "l"]:
-
-            (
-                r[f"rouge-{k}-f"],
-                r[f"rouge-{k}-r"],
-            ) = (
-                r[f"rouge-{k}-r"],
-                r[f"rouge-{k}-f"],
-            )
-
-    return results
-
-@cache()
-
-def run_packages_yale_summeval()-> list[dict[str, float]]:
-    refs, hyps = meteor_data_dev()  
-    return meteor_package_yale_summeval(refs, hyps)
+# def run_packages_bckim92_languageevaluation()-> list[dict[str, float]]:
+#     refs, hyps = meteor_data_dev()  
+#     return meteor_package_bckim92_languageevaluation(refs, hyps)
 
 @cache()
 
@@ -1054,27 +1032,29 @@ def run_packages_nlg_eval()-> list[dict[str, float]]:
 
 @cache()
 
+def run_packages_nltk() -> dict[str, float]:
+    refs, hyps = meteor_data_dev() 
+    return meteor_package_nltk(refs, hyps)
+
+@cache()
+
 def run_packages_salaniz_pycocoevalcap()-> list[dict[str, float]]:
     refs, hyps = meteor_data_dev()  
     return meteor_package_salaniz_pycocoevalcap(refs, hyps)
 
-#@cache()
-# FIXME
-# def run_packages_nltk() -> dict[str, float]:
-#     refs, hyps = meteor_data_dev()  # This function is reused; it provides suitable refs and hyps
-#     return meteor_package_nltk(refs, hyps)
+@cache()
+
+def run_packages_vizseq()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_vizseq(refs, hyps)
 
 @cache()
 
-def run_models_lead_3() -> dict[str, float]:
+def run_packages_yale_summeval()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_yale_summeval(refs, hyps)
 
-    """
-
-    Evaluate Lead-3 using reference ROUGE.
-
-    """
-
-    return rouge_reference_overall(*meteor_data_test(), args = "-n 2 -m")
+@cache()
 
 def generate_inline_data() -> None:
 
