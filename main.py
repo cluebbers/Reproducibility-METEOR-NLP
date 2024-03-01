@@ -479,14 +479,14 @@ def meteor_install_packages() -> None:
     )
     
     meteor_install_packages_file(
-        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/",
+        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/meteor",
         urls = [
             "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/meteor-1.5.jar",
         ]
     )
     
     meteor_install_packages_file(
-        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/data",
+        path = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt//meteor/data",
         urls = [
             "https://raw.githubusercontent.com/Maluuba/nlg-eval/master/nlgeval/pycocoevalcap/meteor/data/paraphrase-en.gz"
         ]
@@ -580,6 +580,13 @@ def meteor_install_packages() -> None:
         patches = {
             r'@register_scorer' : r'#',
         }
+    )
+    
+    #huggingface
+    meteor_install_packages_pypi(
+        path = "data/packages/huggingface",
+        package = "evaluate",
+        version = "0.4.1"
     )
 
 
@@ -776,8 +783,7 @@ def meteor_package_bckim92_languageevaluation(env, refs, hyps):
 
 @patch({
     "dataclass":
-        "data/packages/fairseq/fairseq-0.12.2/fairseq/dataclass/__init__.py",
-        
+        "data/packages/fairseq/fairseq-0.12.2/fairseq/dataclass/__init__.py",        
     "meteor":
         "data/packages/fairseq/fairseq-0.12.2/fairseq/scoring/meteor.py"
 })
@@ -801,41 +807,51 @@ def meteor_package_generationeval(env, refs, hyps):
     import tempfile
     import os
 
-    eval_module = env['meteor']  # Correctly access the eval module
-
-    # Ensure refs and hyps lists are directly passed to the eval script without filtering
+    # Assuming the eval script is accessible as a Python module with a run function
+    eval = env['meteor']  # This should be the path to the eval.py script
+       
+    # Preprocess references and hypotheses to replace newline characters with spaces
+    refs = [ref.replace('\n', ' ') for ref in refs]
+    hyps = [hyp.replace('\n', ' ') for hyp in hyps]
+    
+    # Write the references and hypotheses to temporary files
     with tempfile.NamedTemporaryFile('w+', delete=False) as refs_file, \
          tempfile.NamedTemporaryFile('w+', delete=False) as hyps_file:
-        
-        # Write the refs to the temporary file
+
+        # Write each reference and hypothesis to its file
         for ref in refs:
-            refs_file.write(f"{ref}\n")
-        refs_file_path = refs_file.name
-
-        # Write the hyps to the temporary file
+            refs_file.write(ref + "\n")
+        refs_file.flush()  # Ensure data is written
+        
         for hyp in hyps:
-            hyps_file.write(f"{hyp}\n")
+            hyps_file.write(hyp + "\n")
+        hyps_file.flush()  # Ensure data is written
+
+        refs_file_path = refs_file.name
         hyps_file_path = hyps_file.name
+    
+    meteor_score = eval.run(refs_path=refs_file_path, hyps_path=hyps_file_path, num_refs=1, metrics="meteor")
+    #score = eval.meteor_score(references=refs_file_path, hypothesis=hyps_file_path, num_refs=1)
+    meteor_score=meteor_score["meteor"]
 
-    # Execute the eval script using the provided run function within the eval module
-    result = eval_module.run(
-        refs_path=refs_file_path,
-        hyps_path=hyps_file_path,
-        num_refs=1,  # Assuming a single reference per hypothesis
-        lng="en",
-        metrics="meteor"
-    )
-
-    # Clean up the temporary files after use
+    # Clean up the temporary files
     os.unlink(refs_file_path)
     os.unlink(hyps_file_path)
 
-    # Extract and return the METEOR score from the result
-    # Assuming result is a dict with 'meteor' key, adjust based on actual result structure
-    meteor_score = result.get('meteor', 7)  # Default to 0 if not found or in case of errors
+    # Return the METEOR score in the specified format
+    return {'meteor_mean_score': meteor_score}
 
-    aggregated_scores = {"meteor_mean_score": meteor_score}
-    return aggregated_scores
+@patch({
+  "evaluate" :
+      "data/packages/huggingface/evaluate-0.4.1/src/evaluate/__init__.py"  
+})
+
+def meteor_package_huggingface(env, refs, hyps):
+    meteor = env["evaluate"].load("meteor")
+    results = meteor.compute(predictions=hyps, references = refs)
+    meteor_score = results["meteor"]
+    
+    return {'meteor_mean_score': meteor_score} 
 
 @patch({
     "meteor":
@@ -875,24 +891,23 @@ def meteor_package_salaniz_pycocoevalcap(env, refs, hyps):
     "meteor":
     "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/scorers.py",  
 })
-def meteor_package_neulab_comparemt(env, refs, all_hyps):
-    # Initialize the METEORScorer with the path to the METEOR jar file
-    meteor_scorer = env['meteor'].METEORScorer(meteor_directory="data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/")
-    scores = []
+def meteor_package_neulab_comparemt(env, refs, hyps):
+    import tempfile
+    import os
     
-    # Ensure that each reference is paired with its corresponding set of hypotheses
-    for ref, hyps in zip(refs, all_hyps):  # Iterate over pairs of reference and multiple hypotheses
-        hyp_scores = []  # Store scores for each hypothesis against the single reference
-        for hyp in hyps:
-            # Score each hypothesis against the reference
-            score, _ = meteor_scorer.score_sentence(ref, hyp)  # Using score_sentence for individual pairs
-            hyp_scores.append(score)
-        # Optionally, you can aggregate scores per reference here, e.g., take the mean of hyp_scores if needed
-        scores.extend(hyp_scores)  # Extend the main score list with scores from this round of hypotheses
+    meteor_directory = "data/packages/neulab_comparemt/compare_mt-0.2.10/compare_mt/meteor"
+    meteor_options = "-l en -norm"
+    meteor_scorer = env['meteor'].METEORScorer(meteor_directory=meteor_directory, options = meteor_options)
+    
+    # Preprocess references and hypotheses to replace newline characters with spaces
+    refs = [ref.replace('\n', ' ') for ref in refs]
+    hyps = [hyp.replace('\n', ' ') for hyp in hyps]    
+    
+    score = meteor_scorer.score_corpus(ref=refs, out=hyps)
 
     # Calculate the mean METEOR score across all evaluated pairs
     aggregated_scores = {
-        "meteor_mean_score": sum(scores) / len(scores) if scores else 0
+        "meteor_mean_score": score
     }
 
     return aggregated_scores
@@ -944,9 +959,27 @@ def meteor_package_nltk(refs, hyps):
     mean_score = sum(scores) / len(scores) if scores else 0
     return {'meteor_mean_score': mean_score}
 
+def meteor_package_nltk_par(refs, hyps):
+    import nltk
+    from nltk.translate.meteor_score import meteor_score
+    scores = []
+
+    # Tokenize references and hypotheses
+    tokenized_refs = [[nltk.word_tokenize(ref)] for ref in refs]  # Wrapping each ref in another list
+    tokenized_hyps = [nltk.word_tokenize(hyp) for hyp in hyps]
+
+    for tokenized_ref, tokenized_hyp in zip(tokenized_refs, tokenized_hyps):
+        # Calculate METEOR score for each hypothesis against its reference(s)
+        # NLTK's meteor_score function expects the first argument to be a list of lists of reference tokens
+        # and the second argument to be a list of hypothesis tokens.
+        score = meteor_score(tokenized_ref, tokenized_hyp, alpha = 0.85, beta = 0.2, gamma = 0.6)
+        scores.append(score)
+    
+    # Aggregate scores to calculate mean METEOR score
+    mean_score = sum(scores) / len(scores) if scores else 0
+    return {'meteor_mean_score': mean_score}
+
 @patch({
-    # "vizseq":
-    #      "data/packages/vizseq/vizseq-0.1.15/vizseq/__init__.py",
     "vizseq._utils.optional" :
         "data/packages/vizseq/vizseq-0.1.15/vizseq/_utils/optional.py",
     "vizseq.scorers":
@@ -1012,29 +1045,12 @@ def meteor_package_yale_summeval(env, refs, hyps):
 # def run_packages_neulab_comparemt()-> list[dict[str, float]]:
 #     refs, hyps = meteor_data_dev()  
 #     return meteor_package_neulab_comparemt(refs, hyps)
-# @cache()
-
-# def run_packages_generationeval()-> list[dict[str, float]]:
-#     refs, hyps = meteor_data_dev()  
-#     return meteor_package_generationeval(refs, hyps)
 
 @cache()
 
-# def run_packages_bckim92_languageevaluation()-> list[dict[str, float]]:
-#     refs, hyps = meteor_data_dev()  
-#     return meteor_package_bckim92_languageevaluation(refs, hyps)
-
-@cache()
-
-def run_packages_nlg_eval()-> list[dict[str, float]]:
+def run_packages_generationeval()-> list[dict[str, float]]:
     refs, hyps = meteor_data_dev()  
-    return meteor_package_nlg_eval(refs, hyps)
-
-@cache()
-
-def run_packages_nltk() -> dict[str, float]:
-    refs, hyps = meteor_data_dev() 
-    return meteor_package_nltk(refs, hyps)
+    return meteor_package_generationeval(refs, hyps)
 
 @cache()
 
@@ -1044,15 +1060,45 @@ def run_packages_salaniz_pycocoevalcap()-> list[dict[str, float]]:
 
 @cache()
 
-def run_packages_vizseq()-> list[dict[str, float]]:
+def run_packages_bckim92_languageevaluation()-> list[dict[str, float]]:
     refs, hyps = meteor_data_dev()  
-    return meteor_package_vizseq(refs, hyps)
+    return meteor_package_bckim92_languageevaluation(refs, hyps)
+
+@cache()
+
+def run_packages_nlg_eval()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_nlg_eval(refs, hyps)
 
 @cache()
 
 def run_packages_yale_summeval()-> list[dict[str, float]]:
     refs, hyps = meteor_data_dev()  
     return meteor_package_yale_summeval(refs, hyps)
+
+@cache()
+
+def run_packages_nltk() -> dict[str, float]:
+    refs, hyps = meteor_data_dev() 
+    return meteor_package_nltk(refs, hyps)
+
+@cache()
+
+def run_packages_nltk_par() -> dict[str, float]:
+    refs, hyps = meteor_data_dev() 
+    return meteor_package_nltk_par(refs, hyps)
+
+@cache()
+
+def run_packages_huggingface()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_huggingface(refs, hyps)
+
+@cache()
+
+def run_packages_vizseq()-> list[dict[str, float]]:
+    refs, hyps = meteor_data_dev()  
+    return meteor_package_vizseq(refs, hyps)
 
 @cache()
 
