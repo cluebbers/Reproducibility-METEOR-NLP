@@ -219,6 +219,15 @@ regex_meteor_packages = {
 The found terms are added to a list in `paper_meteor_packages`.
 The most used packages are variations of Pycocoeval and NLTK.
 
+| Github | number of citations |
+|---------|---------|
+| coco-caption | 128 |
+| NLTK | 48 |
+|generation eval | 44|
+|huggingface/evaluate | 37|
+| fairseq | 29 |
+| nlg_eval | 8 |
+
 ### Does the paper include the released code?
 
 The regular expression to search for codebases:
@@ -253,32 +262,65 @@ You get the following results:
 
 ### Reproducibility
 
+Out of the 1.613 papers
+
+- 16 % are deemed reproducible
+- 34 % cite METEOR software packages
+- 16 % release code
+- 2 % release code with METEOR evaluation
+- 0 % list METEOR configuration parameters
+
 ### Correctness
 
 There seem to be two groups of implementations and something is off between them.
 
 #### Wrappers
 
-Packages with a lower score use the original Java METEOR implementation, its paraphrase file, and the wrapper by Pycocoevalcap.
+Packages with a lower score use the original Java METEOR implementation, its paraphrase file, and the wrapper from [coco-caption](https://github.com/tylin/coco-caption/blob/3a9afb2682141a03e1cdc02b0df6770d2c884f6f/pycocoevalcap/meteor/meteor.py).
+They are used in roughly 60 % of the papers.
 The wrapper was developed in cooperation with an author of METEOR, so we consider it correct.
-It was written for Python2 and it had to be changed a bit to work with Python3.
+It was written for Python2 and it had to be changed a bit to work with the Python3 packages we investigated.
 Different adaptions for Python3 may have led to slightly different scores.
 
 #### Reimplementation
 
 Packages with the higher score use the reimplementation of NLTK with wordnet paraphrases.
-There is a [closed issue](https://github.com/nltk/nltk/issues/2655) on GitHub regarding the higher scores with NLTK. NLTK implements METEOR v1.0. They are aware of the higher scores, but since they do not have an open-source implementation of METEOR v1.5, they stick with what they have.
+They are used in roughly 40 % of the papers.
+There is a [closed issue](https://github.com/nltk/nltk/issues/2655) on GitHub regarding the higher scores with NLTK.
+NLTK implements METEOR v1.0.
+Implementing METEOR v1.5 is far more complex.
+It introduces paraphrases as an additional matching scheme and also word weights.
+Default parameters for METEOR v1.0 were tuned for adequacy and fluency, while v1.5 uses rank as its default task.
+NLTK developers are aware of the higher scores, but since they do not have an open-source implementation of METEOR v1.5, they stick with what they have.
+
+They also use slightly different parameter values for alpha, beta, and gamma than the original JAVA implementation.
+
+This could all be negated by citing the correct METEOR version when reporting METEOR scores.
+The NLTK documentation does not mention the METEOR version.
+This information is hidden in the [Python code](https://github.com/nltk/nltk/blob/f2a92bd7e360e39a4439e4d97540fd68f2721451/nltk/translate/meteor_score.py).
+So no one references the appropriate METEOR v1.0 paper.
+They all reference the most recent paper (METEOR v1.5).
 
 ## Conclusion
 
-This is problematic. NLTK is a very popular package and is utilized by other popular packages like Fairseq and Huggingface.
-If you try to build on a paper that used NLTK, but for whatever reason decide to use a Java wrapper, your scores will be lower just because of that.
+Low reproducibility was expected, as there is no reason why papers using METEOR should be significantly better than papers using ROUGE.
+The numbers are a bit lower, but this could be rooted in a missing manual review of the papers.
 
-No one references the appropriate METEOR v1.0 paper. They all reference the most recent paper (METEOR v1.5).
+Correctness is a more problematic issue.
+NLTK and its derivates are used in about 40 % of the papers citing METEOR packages.
+Chances are, researchers use them if they fit in their environment.
+Maybe they are already using them for a different task.
 
-Also, METEOR v1.0 had adequacy and fluency as a default task, while METEOR v1.5 has rank, resulting in different parameters.
+If you try to build on a paper, there are these possibilities:
 
-The good: METEOR is not used on leaderboards at Papers With Code.
+1. the paper reports the used packages and you use the same
+2. you choose another implementation, and it's from the same group
+3. the paper uses a wrapper and you use a reimplementation. Your scores will be higher by 10 points.
+4. the paper uses a reimplementation and you use a wrapper. Your scores will be lower by 10 points.
+
+Chances are progress is hindered or at least obscured by false comparisons.
+
+The only upside: METEOR is not used on leaderboards at Papers With Code.
 
 ## Limitations
 
