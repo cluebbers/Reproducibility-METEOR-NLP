@@ -331,8 +331,48 @@ Additionally:
 - No manual paper review to filter for METEOR scoring
 - Software validation testing was only done for packages available for Python3
 
-## ROUGE
-
-## BLEU
-
 ## Contributing
+
+Feel free to fork this repository and improve it.
+
+- do a manual review of all papers
+- continue the investigation on METEOR and BLEU
+- build one docker image for investigating METEOR, BLEU, and ROUGE
+
+### ROUGE
+
+Recreating the investigation for reproducibility with the same regular expressions as [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023).
+
+- 25 list parameters
+- 459 list protocol terms
+- 1168 list variants
+- 274 list packages
+- 62 are deemed reproducible (excluding Code Review)
+
+| Finding | Rogue Scores | our reproduction |
+|---|---|---|
+| overall citations | 110.689 | 73.285 |
+| manually excluded | 887 | 0 |
+| papers in review | 2.834 | 2.593 |
+|reproducible | 20 % | 2 % |
+| list parameters | 5 % | 1 % |
+| cite software package | 35 % | 11 % |
+
+Our relative numbers are significantly lower because we did no manual review of automatically identified ROUGE papers.
+This would have reduced the number of papers significantly.
+Also, our reproducible score is lower because we did not do a code review.
+
+### BLEU
+
+This is only the start of an investigation.
+
+- 54 list parameters
+- 3.825 list protocol terms
+- 631 list variants
+- 5.336 list packages
+
+| Finding | BLEU | ROUGE | METEOR |
+|---|---|---|---|
+| papers in review | 9.122 | 2.593 | 1.613 |
+| list parameters | 0.6 % | 1 % | 0 % |
+| cite software package | 58 % | 11 % | 34 % |
