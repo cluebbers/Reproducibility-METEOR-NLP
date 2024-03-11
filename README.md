@@ -2,7 +2,7 @@
 
 This repository is for the Modul M.Inf.2801 Research Lab Rotation at the Georg-August Universität Göttingen.
 
-This work is based on the [Rogue Scores: Reproducibility Guide](https://analyses.org/2023/rogue-scores/reproduce/). After evaluating over 2000 papers using the ROUGE score, they reported three conclusions:
+This work is based on [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023) and the corresponding [Rogue Scores: Reproducibility Guide](https://analyses.org/2023/rogue-scores/reproduce/). After evaluating over 2000 papers using the ROUGE score, they reported three conclusions:
 
 - (A) Critical evaluation decisions and parameters are routinely omitted, making most reported scores irreproducible.
 - (B) Differences in evaluation protocol are common, affect scores, and impact the comparability of results reported in many papers.
@@ -14,27 +14,68 @@ It also provides some review of BLEU scores and reproduces the paper review of R
 
 ## Methodology
 
-### Paper Review
+### Systematic Literature Review
 
-We use the [ACL Anthology Dataset](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus) containing the full text of 67414 machine learning papers.
-We search the full text of all available papers for the keyword *"meteor"*. All found papers are searched with regular expressions for
+#### Data Collection
+
+We use the [ACL Anthology Dataset](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus) containing citations of 73285 machine learning papers, most of them with full texts.
+
+#### METEOR Identification
+
+Initially, search the dataset for occurrences of the keyword `meteor` to filter relevant papers.
+
+#### Paper Review
+
+All found papers are searched with regular expressions for
 
 - Parameters as a string of letters and numbers
-- Protocol variants taken from the [official documentation](https://www.cs.cmu.edu/~alavie/METEOR/README.html#options)
-- Packages identified by online search and by manually reviewing codebases (see Code Review below)
-- Codebases: GitHub, GitLab, Bitbucket, Google Code, Sourceforge
+- Protocol variants taken from the [official documentation]
+- Evaluation packages were identified through online searches and manual codebase reviews.
 
-### Code Review
+#### Code Review
 
-After identifying code repositories, we use the GitHub API to search all GitHub repositories for the keyword *"meteor"*. All found repositories are manually reviewed. The criteria for reproducible code can be found in [Appendix B](https://analyses.org/2023/rogue-scores/files/ACL2023-RogueScores.pdf).
-
+We use regular expressions to search for links or mentions of code repositories GitHub, GitLab, Bitbucket, Google Code, Sourceforge) within the papers.
+We use the GitHub API to search all GitHub repositories for the keyword `meteor`.
 The decision for GitHub repositories was made because
 
 - this was done in the original ROUGE paper
-
 - GitHub repositories are by far the most used ones (see Evaluation)
 
-We also run a test on the most used packages found. We create a simple Lead3-Model from the [cnn_dailymail](https://huggingface.co/datasets/cnn_dailymail) Dataset and evaluate the METEOR score with the most used packages. Finally, we compare the results and identify possible errors by reviewing the code to calculate the METEOR score.
+All found repositories are manually reviewed. Detailed criteria for reproducible code can be found in [Appendix B](https://analyses.org/2023/rogue-scores/files/ACL2023-RogueScores.pdf).
+
+#### Defining Reproducibility
+
+There are three possibilities for reproducibility, based on [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023):
+
+1. The paper cites the METEOR package and parameters
+2. The Paper cites METEOR Package which needs no configuration
+3. The Codebase includes a complete METEOR evaluation.
+
+### Software Validation Testing
+
+#### Package Collection
+
+#### Specimen Task and Model
+
+The cnn_dailymail dataset will serve as the basis for generating summaries using a simple Lead-3 model. This dataset is chosen for its wide acceptance in summarization tasks and the availability of gold standard summaries for evaluation.
+
+Generate summaries for a subset of articles using the Lead-3 model to create a test corpus.
+
+#### Experimental Setup
+
+Calculate the METEOR score for the generated summaries using identified packages from the code review phase.
+
+To check for implementation errors, we checked packages compatible with Python3. Older packages were not considered for actuality and simplicity.
+To run the packages, open the docker image and run
+
+```{python}
+generate_packages_table()
+```
+
+Compare the METEOR scores across different packages, focusing on:
+
+- Component Analysis: Break down the METEOR score into its constituent components to understand the variance across implementations.
+- Package Evaluation: Identify any software defects or deviations from the standard METEOR calculation that could lead to inconsistent scores.
 
 ## Requirements
 
@@ -43,13 +84,10 @@ We also run a test on the most used packages found. We create a simple Lead3-Mod
 - You need to install the following Python packages for the Jupyter notebooks:
 
 ```{python}
-pandas
-re  
-numpy  
-requests
-time
-urllib
-datasets
+pandas=2.1.4
+numpy=1.26.2  
+requests=2.31.0
+datasets=2.16.1
 ```
 
 - The ACL Anthology dataset by Rohatgi et al. is available [here](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus). *acl-publication-info.74k.v2.parquet* has to be in \data.
@@ -57,44 +95,49 @@ datasets
 
 ### Docker image
 
-For code reviews and the creation of the graphics, there is a docker image similar to the one provided for ROUGE. The full guide for the source image is [here](https://analyses.org/2023/rogue-scores/reproduce/).
+For software validation testing and the creation of the graphics, there is a docker image similar to the one provided for ROUGE. The full guide for the source image is [here](https://analyses.org/2023/rogue-scores/reproduce/).
 
 ```{python}
 # create the image. Download stuff
-make buld
+make build
+
 # start image
 make start
+
 # clean after your done
 make clean
 ```
 
-The following commands are working:
 When you are done, use this to
 
 ```{python}
 # stop docker and return later to continue working
 docker stop meteorscores
+
 # clean everything. needs make start again
 make clean
 ```
 
 ## Experiments
 
-First, we identify papers containing the keyword in the full text.
+There are 73.285 papers in the dataset. 5.871 Papers without a full text get their `error_download` variable set to `True`.
 
-```{python}
-" meteor "
-```
+Then, we identify papers containing the keyword `meteor` in the full text. This sets the variable `paper_meteor_prelim` of 1.613 papers to `True`. Only those papers are included in the following experiments.
 
-There are 73285 papers in the dataset. 67414 with full text. 1613 papers contain the keyword. Those are included in the following experiments.
+There may be some false positive papers found by keyword search because it could also match papers focusing on astronomical analysis. It would need a manual paper review to exclude them.
 
-### Parameters
+### How many papers post Parameters
 
 The regular expression to search for parameters anywhere in the text:
 
 ```{python}
 pattern = r"((?: -[a-z123](?: [a-z0-9.]{1,4})?){2,})"
 ```
+
+- Only 9 papers with parameters are found. And those parameters are not related to METEOR. This suggests METEOR is mostly run with the default configuration. The METEOR documentation states:
+
+>"For the majority of scoring scenarios, only the -l and -norm options should be used. These are the ideal settings for which language-specific parameters are tuned."
+If no one messes with the tuned parameters, this ought to be a good thing.
 
 ### Protocol
 
@@ -115,6 +158,15 @@ regex_meteor_protocol = {
     'verbose_output': r'\b(?:-vOut|verbose\s+output|output\s+verbose\s+scores)\b'
 }
 ```
+
+- METEOR protocol terms are mentioned, especially ones related to the tasks:
+
+>- rank: parameters tuned to human rankings from WMT09 and WMT10
+>- adq: parameters tuned to adequacy scores from NIST Open MT 2009
+>- hter: parameters tuned to HTER scores from GALE P2 and
+>- li: language-independent parameters
+
+It is good that they are mentioned because this could potentially alter the scores.
 
 ### Packages
 
@@ -141,6 +193,8 @@ regex_meteor_packages = {
 }
 ```
 
+- The most used packages are variations of Pycocoeval and NLTK
+
 ### Codebases
 
 The regular expression to search for codebases:
@@ -150,41 +204,15 @@ regex_codebases = r'https?://(?:www\.)?(?:github\.com|gitlab\.com|bitbucket\.org
 ```
 
 Found GitHub codebases are searched for the term "meteor". Matches are manually reviewed for reproducibility and what METEOR packages are used.
+227 unique GitHub repositories were found in the papers. 55 of them contained the keyword "meteor". 33 were found to be reproducible regarding the METEOR score.
 
 The docker file
 
 ## Results
 
-### Paper Review Results
+### Reproducibility
 
-- 1613 papers contain the keyword "meteor"
-- Only 9 papers with parameters are found. And those parameters are not related to METEOR. This suggests METEOR is mostly run with the default configuration. The METEOR documentation states:
-
->"For the majority of scoring scenarios, only the -l and -norm options should be used. These are the ideal settings for which language-specific parameters are tuned."
-If no one messes with the tuned parameters, this ought to be a good thing.
-
-- METEOR protocol terms are mentioned, especially ones related to the task.
->
->- rank: parameters tuned to human rankings from WMT09 and WMT10
->- adq: parameters tuned to adequacy scores from NIST Open MT 2009
->- hter: parameters tuned to HTER scores from GALE P2 and
->- li: language-independent parameters
-
-It is good that they are mentioned because this could potentially alter the scores.
-// TODO
-
-- The most used packages are variations of Pycocoeval and NLTK
-
-### Code Review Results
-
-227 unique GitHub repositories were found in the papers. 55 of them contained the keyword "meteor". 33 were found to be reproducible regarding the METEOR score.
-
-To check for implementation errors, we checked packages compatible with Python3. Older packages were not considered for actuality and simplicity.
-To run the packages, open the docker image and run
-
-```{python}
-generate_packages_table()
-```
+### Correctness
 
 You get the following results:
 |package | METEOR score|
@@ -208,6 +236,15 @@ No one references the appropriate METEOR v1.0 paper. They all reference the most
 Also, METEOR v1.0 had adequacy and fluency as a default task, while METEOR v1.5 has rank, resulting in different parameters.
 
 The good: it is not used on leaderboards at Paperswithcode.
+
+## Limitations
+
+All limitations stated in [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023) apply.
+Additionally:
+
+- Our [ACL Anthology Dataset](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus) only includes papers up to September 2022
+- No manual paper review to filter for METEOR scoring
+- Software validation testing was only done for packages available for Python3
 
 ## ROUGE
 
