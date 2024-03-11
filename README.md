@@ -61,13 +61,20 @@ There are three possibilities for reproducibility, based on [Rogue Scores](https
 
 ### Software Validation Testing
 
+The original METEOR score software is a Java package.
+It cannot be used directly in the popular machine-learning language Python.
+So there needs to be a wrapper or a reimplementation.
+Those are sources of failure.
+We check how those implementations may differ.
+
 #### Package Collection
 
 We download all METEOR packages available for Python3 with more than 3 citations, resulting in 6 total packages.
+They are identified by the code review and online search.
 
 #### Specimen Task
 
-Identical to the ROUGE paper, we use the [cnn_dailymail dataset](https://huggingface.co/datasets/ccdv/cnn_dailymail). Human-written bullet point "highlights" are reference summaries. We use METEOR to evaluate the specimen model hypothesis against the references using a development set.
+Identical to the ROUGE paper, we use the [CNN / Daily Mail dataset](https://huggingface.co/datasets/ccdv/cnn_dailymail). Human-written bullet point "highlights" are reference summaries. We use METEOR to evaluate the specimen model hypothesis against the references using a development set.
 
 #### Specimen Model
 
@@ -75,9 +82,11 @@ Evaluation is performed on Lead-3. This summarizes an article by returning its f
 
 #### Experimental Setup
 
-Calculate the METEOR score for the generated summaries using identified packages from the code review phase.
-
-To check for implementation errors, we checked packages compatible with Python3. Older packages were not considered for actuality and simplicity.
+We calculate the METEOR score for the generated summaries using the packages.
+We only checked packages compatible with Python3.
+Older packages were not considered for recency and simplicity.
+The CNN / Daily Mail development set consists of 13.000 test cases.
+We calculate the mean METEOR score for them.
 To run the packages, open the docker image and run
 
 ```{python}
@@ -97,7 +106,7 @@ requests=2.31.0
 datasets=2.16.1
 ```
 
-- The ACL Anthology dataset by Rohatgi et al. is available [here](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus). *acl-publication-info.74k.v2.parquet* has to be in \data.
+- The ACL Anthology dataset by Rohatgi et al. is available [here](https://huggingface.co/datasets/ACL-OCL/ACL-OCL-Corpus). `acl-publication-info.74k.v2.parquet` has to be in `\data`.
 - You need a [GitHub API Key](https://github.com/settings/tokens) to search the repository for keywords. Add it at the top of the Jupyter Notebooks.
 
 ### Docker image
