@@ -1201,7 +1201,6 @@ def generate_overview_figure() -> None:
     # that reference software with scoring errors
     # {rouge["software_error"].sum() / (rouge["packages"].map(len) != 0).sum() * 100:.0f}% papers
 
-    
 
 def generate_historical_plot():
 
@@ -1399,67 +1398,6 @@ def generate_process_figure() -> None:
 
     """.split("\n")))
 
-def generate_configs_table() -> None:
-
-    """
-
-    Generate Table 1.
-
-    """
-
-    import concurrent.futures as cf
-    from tqdm import tqdm
-
-    experiments = collect("^run_configs")
-
-    ex = cf.ProcessPoolExecutor()
-
-    results = {
-        exp.__name__.replace("run_configs_", ""):
-        ex.submit(exp) for exp in experiments
-    }
-
-    list(tqdm(
-        cf.as_completed(results.values()),
-        total = len(results),
-        desc = "Protocol Experiments"
-    ))
-
-    df = pd.DataFrame([
-        pd.DataFrame(v.result()).mean().rename(k) * 100
-        for k, v in results.items()
-    ])
-
-    delta = df - df.loc["baseline"]
-
-    recall_experiments = df.index.str.startswith("truncate_")
-    fscore_experiments = ~recall_experiments & (df.index != "baseline")
-
-    print("\n" + "=" * 80)
-    print("Rogue Scores Table 1:\nComparability Experiments\n")
-
-    print(pd.concat([
-
-        delta
-        .loc[
-            fscore_experiments,
-            ["rouge-1-f", "rouge-2-f", "rouge-l-f"],
-        ]
-        .rename(axis = 1, mapper = lambda _: _.replace("-f", "").upper())
-        .round(2),
-
-        delta
-        .loc[
-            recall_experiments,
-            ["rouge-1-r", "rouge-2-r", "rouge-l-r"],
-        ]
-        .rename(axis = 1, mapper = lambda _: _.replace("-r", "").upper())
-        .round(2)
-
-    ]))
-
-    print("=" * 80 + "\n")
-
 def generate_packages_table() -> None:
 
     """
@@ -1506,45 +1444,6 @@ def generate_packages_table() -> None:
     print(df)
 
     print("=" * 80)
-
-def generate_models_table() -> None:
-
-    """
-
-    Generate Table 3.
-
-    """
-
-    import concurrent.futures as cf
-    from tqdm import tqdm
-
-    experiments = collect("^run_models")
-
-    ex = cf.ProcessPoolExecutor()
-
-    futures = {
-        exp.__name__.replace("run_models_", ""):
-        ex.submit(exp) for exp in experiments
-    }
-
-    list(tqdm(
-        cf.as_completed(futures.values()),
-        total = len(futures),
-        desc = "Case Study Experiments"
-    ))
-
-    df = pd.DataFrame({k: v.result() for k, v in futures.items()}).T * 100
-
-    print("\n" + "=" * 80)
-    print("Rogue Scores Table 3:\nRogue-3 Case Study\n")
-
-    print(
-        df[["rouge-1-f", "rouge-2-f", "rouge-l-f"]]
-        .rename(axis = 1, mapper = lambda _: _.replace("-f", "").upper())
-        .round(2)
-    )
-
-    print("=" * 80 + "\n")
 
 def load_dataset() -> pd.DataFrame:
 
