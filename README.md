@@ -56,7 +56,7 @@ All found repositories are manually reviewed for reproducibility. Detailed crite
 There are three possibilities for reproducibility, based on [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023):
 
 1. The paper cites the METEOR package and parameters
-2. The Paper cites METEOR Package which needs no configuration
+2. The Paper cites the METEOR Package which needs no configuration
 3. The Codebase includes a complete METEOR evaluation.
 
 ### Software Validation Testing
@@ -264,7 +264,7 @@ You get the following results:
 
 Out of the 1.613 papers
 
-- 16 % are deemed reproducible
+- 23 % are deemed reproducible
 - 34 % cite METEOR software packages
 - 16 % release code
 - 2 % release code with METEOR evaluation
@@ -304,7 +304,7 @@ They all reference the most recent paper (METEOR v1.5).
 ## Conclusion
 
 Low reproducibility was expected, as there is no reason why papers using METEOR should be significantly better than papers using ROUGE.
-The numbers are a bit lower, but this could be rooted in a missing manual review of the papers.
+The numbers are a bit higher because METEOR scoring is usually done without any configuration.
 
 Correctness is a more problematic issue.
 NLTK and its derivates are used in about 40 % of the papers citing METEOR packages.
