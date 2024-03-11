@@ -74,11 +74,15 @@ They are identified by the code review and online search.
 
 #### Specimen Task
 
-Identical to the ROUGE paper, we use the [CNN / Daily Mail dataset](https://huggingface.co/datasets/ccdv/cnn_dailymail). Human-written bullet point "highlights" are reference summaries. We use METEOR to evaluate the specimen model hypothesis against the references using a development set.
+Identical to the ROUGE paper, we use the [CNN / Daily Mail dataset](https://huggingface.co/datasets/ccdv/cnn_dailymail).
+Human-written bullet point "highlights" are reference summaries.
+We use METEOR to evaluate the specimen model hypothesis against the references using a development set.
+See Appendix E in [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023).
 
 #### Specimen Model
 
 Evaluation is performed on Lead-3. This summarizes an article by returning its first three sentences.
+See Appendix F in [Rogue Scores](https://aclanthology.org/2023.acl-long.107) (Grusky, ACL 2023).
 
 #### Experimental Setup
 
@@ -150,10 +154,14 @@ The regular expression to search for parameters anywhere in the text:
 pattern = r"((?: -[a-z123](?: [a-z0-9.]{1,4})?){2,})"
 ```
 
-- Only 9 papers with parameters are found. And those parameters are not related to METEOR. This suggests METEOR is mostly run with the default configuration. The METEOR documentation states:
+The parameters are copied to a string in `paper_meteor_params`.
+Only 9 papers with parameters are found.
+Those parameters are not related to METEOR.
+This suggests METEOR is mostly run with the default configuration.
+If no one messes with the tuned parameters, this ought to be a good thing.
+The METEOR documentation states:
 
 >"For the majority of scoring scenarios, only the -l and -norm options should be used. These are the ideal settings for which language-specific parameters are tuned."
-If no one messes with the tuned parameters, this ought to be a good thing.
 
 ### Which evaluation decisions are referenced?
 
@@ -175,14 +183,13 @@ regex_meteor_protocol = {
 }
 ```
 
-- METEOR protocol terms are mentioned, especially ones related to the tasks:
+The found protocol terms are added in a list in `paper_meteor_protocol`.
+METEOR protocol terms are mentioned, mostly ones related to the tasks:
 
 >- rank: parameters tuned to human rankings from WMT09 and WMT10
 >- adq: parameters tuned to adequacy scores from NIST Open MT 2009
 >- hter: parameters tuned to HTER scores from GALE P2 and
 >- li: language-independent parameters
-
-It is good that they are mentioned because this could potentially alter the scores.
 
 ### Which METEOR software is cited?
 
@@ -209,24 +216,38 @@ regex_meteor_packages = {
 }
 ```
 
-- The most used packages are variations of Pycocoeval and NLTK
+The found terms are added to a list in `paper_meteor_packages`.
+The most used packages are variations of Pycocoeval and NLTK.
 
 ### Does the paper include the released code?
 
 The regular expression to search for codebases:
+Found URLs are added to a list in `code_meteor_url`.
+227 unique GitHub repositories were found in the papers.
 
-```{python}
-regex_codebases = r'https?://(?:www\.)?(?:github\.com|gitlab\.com|bitbucket\.org|sourceforge\.net|google\.code|code\.google)[^\s)]*(?<!\.)'
-```
-
-Found GitHub codebases are searched for the term "meteor". Matches are manually reviewed for reproducibility and what METEOR packages are used.
-227 unique GitHub repositories were found in the papers. 55 of them contained the keyword "meteor".
+Found GitHub codebases are searched for the term `meteor`.
+If the keyword is found, it sets `code_meteor_prelim` to `True`.
+55 of them contained the keyword `meteor`.
 
 ### Does the evaluation code appear reproducible?
 
- 33 were found to be reproducible regarding the METEOR score.
+All 55 code repositories were manually reviewed for reproducibility and what METEOR packages are used.
+33 were found to be reproducible regarding the METEOR score.
+This sets their `code_meteor`variable to `True`.
 
-The docker file
+### How do different packages score the same input model?
+
+You get the following results:
+| GitHub | METEOR score|
+|--------| ------------|
+| WebNLG/GenerationEval  | 0.217303 |
+| salaniz/pycocoevalcap    | 0.218336 |
+| bckim92/language-evaluation | 0.167222 |
+| Maluuba/nlg-eval | 0.221483 |
+| Yale-LILY/SummEval | 0.221483 |
+| nltk/nltk | 0.382306 |
+| huggingface/evaluate | 0.382306 |
+| facebookresearch/vizseq | 0.332000 |
 
 ## Results
 
@@ -234,17 +255,21 @@ The docker file
 
 ### Correctness
 
-You get the following results:
-|package | METEOR score|
-|--------| ------------|
-|Pycoco  ||
-|NLTK    ||
-
 There seem to be two groups of implementations and something is off between them.
-Packages with a lower score use the original Java METEOR implementation, its paraphrase file, and the wrapper by Pycocoevalcap.
-Packages with the higher score use the reimplementation of NLTK with wordnet paraphrases.
 
+#### Wrappers
+
+Packages with a lower score use the original Java METEOR implementation, its paraphrase file, and the wrapper by Pycocoevalcap.
+The wrapper was developed in cooperation with an author of METEOR, so we consider it correct.
+It was written for Python2 and it had to be changed a bit to work with Python3.
+Different adaptions for Python3 may have led to slightly different scores.
+
+#### Reimplementation
+
+Packages with the higher score use the reimplementation of NLTK with wordnet paraphrases.
 There is a [closed issue](https://github.com/nltk/nltk/issues/2655) on GitHub regarding the higher scores with NLTK. NLTK implements METEOR v1.0. They are aware of the higher scores, but since they do not have an open-source implementation of METEOR v1.5, they stick with what they have.
+
+## Conclusion
 
 This is problematic. NLTK is a very popular package and is utilized by other popular packages like Fairseq and Huggingface.
 If you try to build on a paper that used NLTK, but for whatever reason decide to use a Java wrapper, your scores will be lower just because of that.
@@ -252,8 +277,6 @@ If you try to build on a paper that used NLTK, but for whatever reason decide to
 No one references the appropriate METEOR v1.0 paper. They all reference the most recent paper (METEOR v1.5).
 
 Also, METEOR v1.0 had adequacy and fluency as a default task, while METEOR v1.5 has rank, resulting in different parameters.
-
-## Conclusion
 
 The good: METEOR is not used on leaderboards at Papers With Code.
 
