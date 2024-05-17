@@ -14,6 +14,17 @@ Our work primarily investigates the METEOR score, its implementations, and its u
 
 It also provides some review of BLEU scores and reproduces the paper review of ROUGE scores.
 
+## Repository Structure
+
+```
+├── README.md
+├── METEOR.ipynb              # literature review of METEOR
+├── meteor_code_review.csv    # results of manual code review
+├── ROUGE.ipynb               # preliminary literature review of ROUGE
+├── BLEU.ipynb                # preliminary literature review of BLEU
+├── meteorscores              # directory containing docker image
+```
+
 ## Methodology
 
 ### Systematic Literature Review
