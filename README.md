@@ -20,6 +20,7 @@ It also provides some review of BLEU scores and reproduces the paper review of R
 ├── README.md
 ├── METEOR.ipynb              # literature review of METEOR
 ├── meteor_code_review.csv    # results of manual code review
+├── 2024-03-15_Lübbers.pdf    # short presentations of the results
 ├── ROUGE.ipynb               # preliminary literature review of ROUGE
 ├── BLEU.ipynb                # preliminary literature review of BLEU
 ├── meteorscores              # directory containing docker image
