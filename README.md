@@ -14,6 +14,10 @@ Our work primarily investigates the METEOR score, its implementations, and its u
 
 It also provides some review of BLEU scores and reproduces the paper review of ROUGE scores.
 
+### Upstream impact
+
+Based on these experiments, we upstreamed the main METEOR reproducibility findings to the official METEOR documentation in Hugging Face [`evaluate`](https://huggingface.co/spaces/evaluate-metric/meteor). A merged documentation pull request ([huggingface/evaluate#677](https://github.com/huggingface/evaluate/pull/677)) adds a warning that different METEOR implementations and configurations can shift scores by about 10 absolute points and recommends pinning package versions and documenting evaluation flags. The metric card now links to this repository as a reference for the underlying analysis.
+
 ## Repository Structure
 
 ```
